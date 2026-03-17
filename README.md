@@ -1,97 +1,70 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Workspace — react-native-macos test harness
 
-# Getting Started
+Test app for verifying react-native library ports to macOS via [react-native-macos](https://github.com/nicklockwood/react-native-macos).
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## Prerequisites
 
-## Step 1: Start Metro
+- Node >= 20
+- Ruby (with bundler) for CocoaPods
+- Xcode with macOS SDK
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
-
-To start the Metro dev server, run the following command from the root of your React Native project:
-
-```sh
-# Using npm
-npm start
-
-# OR using Yarn
-yarn start
-```
-
-## Step 2: Build and run your app
-
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
+## Setup
 
 ```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
+npm install --ignore-scripts
+cd macos && LANG=en_US.UTF-8 pod install && cd ..
 ```
 
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+If the library needs codegen (e.g. react-native-enriched-markdown):
 
 ```sh
-bundle install
+cd ../react-native-enriched-markdown-macos
+npm install
+npx bob build
+cd ../workspace/macos && LANG=en_US.UTF-8 pod install && cd ..
 ```
 
-Then, and every time you update your native dependencies, run:
+## Running (macOS)
+
+**If port 8081 is already in use** (e.g. by another Metro instance), use a different port:
 
 ```sh
-bundle exec pod install
+# Terminal 1 — start Metro on an alternate port
+npx react-native start --port 8082
+
+# Terminal 2 — build and run the macOS app
+RCT_METRO_PORT=8082 npx react-native run-macos
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+If port 8081 is free, the default works:
 
 ```sh
-# Using npm
-npm run ios
+# Terminal 1
+npx react-native start
 
-# OR using Yarn
-yarn ios
+# Terminal 2
+npx react-native run-macos
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+Alternatively, open `macos/workspace.xcworkspace` in Xcode and run the `workspace-macOS` scheme directly.
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+> **Note:** If you launch from Xcode, `RCT_METRO_PORT` has no effect — the app will always connect to port 8081. Make sure Metro is running on 8081 if using Xcode, or use the CLI approach above for alternate ports.
 
-## Step 3: Modify your app
+## Metro configuration for local libraries
 
-Now that you have successfully run the app, let's make changes!
+The `metro.config.js` is configured to resolve the locally-linked library correctly:
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+- **`watchFolders`** — tells Metro to watch the library source directory for changes
+- **`extraNodeModules`** — maps `react-native-enriched-markdown` to the local path (Metro doesn't follow symlinks by default)
+- **`nodeModulesPaths`** — ensures the library's imports (e.g. `react`, `@babel/runtime`) resolve from the workspace's `node_modules`
+- **`blockList`** — prevents the library's own `node_modules/react` and `node_modules/react-native` from being bundled (avoids the "Invalid hook call" duplicate React error)
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+If Metro shows stale cache issues after config changes:
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+```sh
+watchman watch-del-all && npx react-native start --reset-cache
+```
 
-## Congratulations! :tada:
+## Libraries under test
 
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+- **react-native-enriched-markdown** — linked locally from `../react-native-enriched-markdown-macos`
