@@ -13,7 +13,11 @@ const workspaceNodeModules = path.resolve(__dirname, 'node_modules');
  */
 const config = {
   watchFolders: [enrichedMarkdownPath],
+  transformer: {
+    babelTransformerPath: require.resolve('./md-transformer'),
+  },
   resolver: {
+    sourceExts: ['js', 'jsx', 'ts', 'tsx', 'json', 'md', 'markdown'],
     // When resolving from the library, also look in the workspace's node_modules
     nodeModulesPaths: [workspaceNodeModules],
     extraNodeModules: {
