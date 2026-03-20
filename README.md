@@ -21,7 +21,7 @@ If the library needs codegen (e.g. react-native-enriched-markdown):
 cd ../react-native-enriched-markdown
 npm install
 npx bob build
-cd ../workspace/macos && LANG=en_US.UTF-8 pod install && cd ..
+cd ../enriched-markdown-macos-harness/macos && LANG=en_US.UTF-8 pod install && cd ..
 ```
 
 ## running
@@ -60,9 +60,11 @@ If Metro shows stale cache issues after config changes:
 watchman watch-del-all && npx react-native start --reset-cache
 ```
 
-## Libraries under test
+## libraries under test
 
-- **react-native-enriched-markdown** — linked locally from `../react-native-enriched-markdown` (fork: [LeslieOA/react-native-enriched-markdown](https://github.com/LeslieOA/react-native-enriched-markdown))
+- **react-native-enriched-markdown** — linked locally from `../react-native-enriched-markdown`
+  - fork: [LeslieOA/react-native-enriched-markdown](https://github.com/LeslieOA/react-native-enriched-markdown)
+  - active branch: [`feat/macos-support-pr163`](https://github.com/LeslieOA/react-native-enriched-markdown/tree/feat/macos-support-pr163) — macOS enhancements (admonitions, mark/sub/sup, anchor scrolling, etc.)
 
 ## development notes
 
