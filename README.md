@@ -1,6 +1,6 @@
-# Workspace — react-native-macos test harness
+# enriched-markdown-macos-harness
 
-Test app for verifying react-native library ports to macOS via [react-native-macos](https://github.com/nicklockwood/react-native-macos).
+Test harness for verifying [react-native-enriched-markdown](https://github.com/LeslieOA/react-native-enriched-markdown) on macOS via [react-native-macos](https://github.com/nicklockwood/react-native-macos).
 
 ## Prerequisites
 
@@ -18,32 +18,27 @@ cd macos && LANG=en_US.UTF-8 pod install && cd ..
 If the library needs codegen (e.g. react-native-enriched-markdown):
 
 ```sh
-cd ../react-native-enriched-markdown-macos
+cd ../react-native-enriched-markdown
 npm install
 npx bob build
 cd ../workspace/macos && LANG=en_US.UTF-8 pod install && cd ..
 ```
 
-## Running (macOS)
-
-**If port 8081 is already in use** (e.g. by another Metro instance), use a different port:
+## running
 
 ```sh
-# Terminal 1 — start Metro on an alternate port
-npx react-native start --port 8082
-
-# Terminal 2 — build and run the macOS app
-RCT_METRO_PORT=8082 npx react-native run-macos
-```
-
-If port 8081 is free, the default works:
-
-```sh
-# Terminal 1
+# terminal 1
 npx react-native start
 
-# Terminal 2
+# terminal 2
 npx react-native run-macos
+```
+
+If port 8081 is busy:
+
+```sh
+npx react-native start --port 8082
+RCT_METRO_PORT=8082 npx react-native run-macos
 ```
 
 Alternatively, open `macos/workspace.xcworkspace` in Xcode and run the `workspace-macOS` scheme directly.
@@ -67,7 +62,7 @@ watchman watch-del-all && npx react-native start --reset-cache
 
 ## Libraries under test
 
-- **react-native-enriched-markdown** — linked locally from `../react-native-enriched-markdown-macos` (fork: [LeslieOA/react-native-enriched-markdown](https://github.com/LeslieOA/react-native-enriched-markdown))
+- **react-native-enriched-markdown** — linked locally from `../react-native-enriched-markdown` (fork: [LeslieOA/react-native-enriched-markdown](https://github.com/LeslieOA/react-native-enriched-markdown))
 
 ## development notes
 

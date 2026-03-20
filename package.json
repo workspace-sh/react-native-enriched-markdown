@@ -14,7 +14,7 @@
     "react": "^19.1.4",
     "react-native": "^0.81.5",
     "react-native-macos": "^0.81.4",
-    "react-native-enriched-markdown": "file:../react-native-enriched-markdown-macos",
+    "react-native-enriched-markdown": "file:../react-native-enriched-markdown",
     "react-native-safe-area-context": "^5.5.2"
   },
   "devDependencies": {

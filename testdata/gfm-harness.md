@@ -75,8 +75,12 @@ Escaped brackets: \[literal brackets\]
 Link with title on image: [![Yaktocat](https://octodex.github.com/images/yaktocat.png "Octodex")](https://octodex.github.com/)
 
 ## Images
-Inline image: ![Octocat](https://github.githubassets.com/images/icons/emoji/octocat.png)  
-Reference image: ![Yaktocat][yaktocat]
+Inline image: ![Octocat](https://github.githubassets.com/images/icons/emoji/octocat.png)
+Reference image (inline): ![Yaktocat][yaktocat]
+
+Block image (own line):
+
+![Yaktocat][yaktocat]
 
 HTML image with width attribute:<br>
 <img alt="Octocat" src="https://octodex.github.com/images/yaktocat.png" width="120" />

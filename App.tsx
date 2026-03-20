@@ -12,11 +12,13 @@ import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 
 // Loaded on the fly via md-transformer — raw string imports
 import testMarkdown from './testdata/Test Markdown File.md';
-import gfmTest from './testdata/gfm-test.md';
+import gfmHarness from './testdata/gfm-harness.md';
+import gfmReference from './testdata/gfm-reference.md';
 import gruberSyntax from './testdata/Markdown Syntax - John Gruber.markdown';
 
 const TEST_FILES = [
-  { label: 'GFM Test', content: gfmTest },
+  { label: 'GFM Harness', content: gfmHarness },
+  { label: 'GFM Reference', content: gfmReference },
   { label: 'Syntax Test', content: testMarkdown },
   { label: 'Gruber Syntax', content: gruberSyntax },
 ];
@@ -28,6 +30,8 @@ const lightMarkdownStyle = {
   },
   strikethrough: { color: '#9CA3AF' },
   underline: { color: '#1F2937' },
+  image: { height: 300, borderRadius: 8, marginTop: 8, marginBottom: 16 },
+  inlineImage: { size: 20 },
 };
 
 const darkMarkdownStyle = {
@@ -58,6 +62,8 @@ const darkMarkdownStyle = {
     borderColor: '#4B2023',
   },
   thematicBreak: { color: '#374151' },
+  image: { height: 300, borderRadius: 8, marginTop: 8, marginBottom: 16 },
+  inlineImage: { size: 20 },
   table: {
     color: '#E5E7EB',
     headerBackgroundColor: '#1F2937',

@@ -2,7 +2,7 @@ const path = require('path');
 const escape = require('escape-string-regexp');
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 
-const enrichedMarkdownPath = path.resolve(__dirname, '../react-native-enriched-markdown-macos');
+const enrichedMarkdownPath = path.resolve(__dirname, '../react-native-enriched-markdown');
 const workspaceNodeModules = path.resolve(__dirname, 'node_modules');
 
 /**
