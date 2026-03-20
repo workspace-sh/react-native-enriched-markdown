@@ -67,4 +67,8 @@ watchman watch-del-all && npx react-native start --reset-cache
 
 ## Libraries under test
 
-- **react-native-enriched-markdown** — linked locally from `../react-native-enriched-markdown-macos`
+- **react-native-enriched-markdown** — linked locally from `../react-native-enriched-markdown-macos` (fork: [LeslieOA/react-native-enriched-markdown](https://github.com/LeslieOA/react-native-enriched-markdown))
+
+## development notes
+
+See [docs/dev.md](docs/dev.md) for library integration quirks, `md4cFlags` configuration, style overrides, and GFM feature support status.

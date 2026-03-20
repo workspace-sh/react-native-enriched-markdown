@@ -18,6 +18,8 @@ const config = {
   },
   resolver: {
     sourceExts: ['js', 'jsx', 'ts', 'tsx', 'json', 'md', 'markdown'],
+    // Resolve from TypeScript source rather than stale compiled lib/
+    resolverMainFields: ['source', 'react-native', 'browser', 'main'],
     // When resolving from the library, also look in the workspace's node_modules
     nodeModulesPaths: [workspaceNodeModules],
     extraNodeModules: {

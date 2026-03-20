@@ -9,11 +9,10 @@ import {
   View,
 } from 'react-native';
 import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
-import { preprocessMarkdown } from './utils/preprocessMarkdown';
 
 // Loaded on the fly via md-transformer — raw string imports
 import testMarkdown from './testdata/Test Markdown File.md';
-import gfmTest from './testdata/GitHub Flavoured Markdown Test.md';
+import gfmTest from './testdata/gfm-test.md';
 import gruberSyntax from './testdata/Markdown Syntax - John Gruber.markdown';
 
 const TEST_FILES = [
@@ -27,6 +26,8 @@ const lightMarkdownStyle = {
     borderColor: '#d0d7de',
     backgroundColor: '#f6f8fa',
   },
+  strikethrough: { color: '#9CA3AF' },
+  underline: { color: '#1F2937' },
 };
 
 const darkMarkdownStyle = {
@@ -111,9 +112,10 @@ function App() {
       </View>
       <EnrichedMarkdownText
         key={`md-${activeIndex}`}
-        markdown={preprocessMarkdown(TEST_FILES[activeIndex].content)}
+        markdown={TEST_FILES[activeIndex].content}
         markdownStyle={isDarkMode ? darkMarkdownStyle : lightMarkdownStyle}
         flavor="github"
+        md4cFlags={{ underline: true }}
         onLinkPress={handleLinkPress}
         style={styles.markdown}
       />

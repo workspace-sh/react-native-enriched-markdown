@@ -57,13 +57,13 @@ Single newline without two spaces does **not** break; you usually need two space
 
 ## Emphasis
 *Italic* _Italic also_
-**Bold** __Bold also__
+**Bold** **Bold also**
 ***Bold & Italic***
 ~~Strikethrough~~
 **Bold with ~~strikethrough~~ inside**
-<u>Underline (HTML)</u>
-<mark>Marked/Highlighted (HTML)</mark>
-H~2~O with <sub>subscript</sub>, and E = mc<sup>2</sup> with <sup>superscript</sup>.
+__Underline__ (via md4cFlags.underline)
+<mark>Marked/Highlighted</mark>
+H<sub>2</sub>O with <sub>subscript</sub>, and E = mc<sup>2</sup> with <sup>superscript</sup>
 
 ## Links & Autolinks
 Inline: [GitHub](https://github.com "GitHub Home")  
