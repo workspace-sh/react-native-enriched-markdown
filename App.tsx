@@ -22,6 +22,13 @@ const TEST_FILES = [
   { label: 'Gruber Syntax', content: gruberSyntax },
 ];
 
+const lightMarkdownStyle = {
+  blockquote: {
+    borderColor: '#d0d7de',
+    backgroundColor: '#f6f8fa',
+  },
+};
+
 const darkMarkdownStyle = {
   paragraph: { color: '#E5E7EB' },
   h1: { color: '#F9FAFB' },
@@ -32,8 +39,8 @@ const darkMarkdownStyle = {
   h6: { color: '#9CA3AF' },
   blockquote: {
     color: '#9CA3AF',
-    borderColor: '#4B5563',
-    backgroundColor: '#1F2937',
+    borderColor: '#3d444d',
+    backgroundColor: '#151b23',
   },
   list: { color: '#E5E7EB', bulletColor: '#9CA3AF', markerColor: '#9CA3AF' },
   codeBlock: {
@@ -66,9 +73,7 @@ function App() {
 
   const handleLinkPress = useCallback(({ url }: { url: string }) => {
     if (url.startsWith('#')) {
-      // In-document anchor — not yet supported (needs native scroll-to offset)
-      // TODO: implement scroll-to-anchor when native ref is exposed
-      console.log(`Anchor link: ${url}`);
+      // Anchor scrolling handled natively by the library
     } else if (url.startsWith('http://') || url.startsWith('https://')) {
       Linking.openURL(url).catch((err) =>
         Alert.alert('Failed to open link', err.message),
@@ -107,7 +112,7 @@ function App() {
       <EnrichedMarkdownText
         key={`md-${activeIndex}`}
         markdown={preprocessMarkdown(TEST_FILES[activeIndex].content)}
-        markdownStyle={isDarkMode ? darkMarkdownStyle : undefined}
+        markdownStyle={isDarkMode ? darkMarkdownStyle : lightMarkdownStyle}
         flavor="github"
         onLinkPress={handleLinkPress}
         style={styles.markdown}
