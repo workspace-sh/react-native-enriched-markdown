@@ -17,8 +17,8 @@ import gfmReference from './testdata/gfm-reference.md';
 import gruberSyntax from './testdata/Markdown Syntax - John Gruber.markdown';
 
 const TEST_FILES = [
-  { label: 'GFM Harness', content: gfmHarness },
   { label: 'GFM Reference', content: gfmReference },
+  { label: 'GFM Harness', content: gfmHarness },
   { label: 'Syntax Test', content: testMarkdown },
   { label: 'Gruber Syntax', content: gruberSyntax },
 ];
@@ -28,7 +28,8 @@ const lightMarkdownStyle = {
     borderColor: '#d0d7de',
     backgroundColor: '#f6f8fa',
   },
-  strikethrough: { color: '#9CA3AF' },
+  // strikethrough: { color: '#9CA3AF' },
+  strikethrough: { color: '#1f2937' },
   underline: { color: '#1F2937' },
   image: { height: 300, borderRadius: 8, marginTop: 8, marginBottom: 16 },
   inlineImage: { size: 20 },
@@ -54,7 +55,8 @@ const darkMarkdownStyle = {
     borderColor: '#374151',
   },
   link: { color: '#60A5FA' },
-  strikethrough: { color: '#6B7280' },
+  // strikethrough: { color: '#6B7280' },
+  strikethrough: { color: '#e5e7eb' },
   underline: { color: '#E5E7EB' },
   code: {
     color: '#F87171',
@@ -116,15 +118,23 @@ function App() {
           </Pressable>
         ))}
       </View>
-      <EnrichedMarkdownText
-        key={`md-${activeIndex}`}
-        markdown={TEST_FILES[activeIndex].content}
-        markdownStyle={isDarkMode ? darkMarkdownStyle : lightMarkdownStyle}
-        flavor="github"
-        md4cFlags={{ underline: true }}
-        onLinkPress={handleLinkPress}
-        style={styles.markdown}
-      />
+      <View style={styles.tabContent}>
+        {TEST_FILES.map((file, i) => (
+          <EnrichedMarkdownText
+            key={`md-${i}`}
+            markdown={file.content}
+            markdownStyle={isDarkMode ? darkMarkdownStyle : lightMarkdownStyle}
+            flavor="github"
+            md4cFlags={{ underline: true }}
+            onLinkPress={handleLinkPress}
+            style={[
+              styles.markdownTab,
+              { zIndex: activeIndex === i ? 1 : 0, opacity: activeIndex === i ? 1 : 0 },
+            ]}
+            pointerEvents={activeIndex === i ? 'auto' : 'none'}
+          />
+        ))}
+      </View>
     </View>
   );
 }
@@ -182,8 +192,16 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingBottom: 48,
   },
-  markdown: {
+  tabContent: {
     flex: 1,
+    position: 'relative',
+  },
+  markdownTab: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
 });
 

@@ -1,4 +1,4 @@
-# GFM “All-the-Things” Test File
+# GFM “All-the-Things” Test File for `react-native-enriched-markdown`
 <!--
 This file exercises most Markdown features supported on GitHub.com:
 CommonMark + GFM extensions + a handful of GitHub-specific niceties
@@ -76,7 +76,7 @@ Link with title on image: [![Yaktocat](https://octodex.github.com/images/yaktoca
 
 ## Images
 Inline image: ![Octocat](https://github.githubassets.com/images/icons/emoji/octocat.png)
-Reference image (inline): ![Yaktocat][yaktocat]
+Reference image: ![Yaktocat][yaktocat]
 
 Block image (own line):
 
