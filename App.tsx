@@ -126,6 +126,7 @@ function App() {
             markdownStyle={isDarkMode ? darkMarkdownStyle : lightMarkdownStyle}
             flavor="github"
             md4cFlags={{ underline: true }}
+            contentInset={{ left: 16, right: 16, top: 16 }}
             onLinkPress={handleLinkPress}
             style={[
               styles.markdownTab,
