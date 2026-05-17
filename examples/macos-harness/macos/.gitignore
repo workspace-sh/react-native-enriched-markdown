@@ -1,2 +1,5 @@
 # CocoaPods
 Pods/
+
+# Swift Package Manager pod cache
+.spm.pods/
