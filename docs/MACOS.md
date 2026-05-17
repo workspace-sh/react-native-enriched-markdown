@@ -134,4 +134,4 @@ These will be addressed in upcoming releases:
 
 ## Example app
 
-See the [macos-example/](../macos-example/) directory for a working example app.
+See the [examples/macos/](../examples/macos/) directory for a working example app.

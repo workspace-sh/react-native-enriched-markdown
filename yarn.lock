@@ -6635,6 +6635,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eslint-plugin-ft-flow@npm:^3.0.11":
+  version: 3.0.11
+  resolution: "eslint-plugin-ft-flow@npm:3.0.11"
+  dependencies:
+    lodash: "npm:^4.17.21"
+    string-natural-compare: "npm:^3.0.1"
+  peerDependencies:
+    eslint: ^8.56.0 || ^9.0.0
+    hermes-eslint: ">=0.15.0"
+  checksum: 10c0/025b3736d99d2831c6d493421fbfa880b0aeef9752d3b677972c7100e5ba424368525bc15b34604f02d18807bfa7b1bcaa2c3f37552381f2ce45283faa5989d5
+  languageName: node
+  linkType: hard
+
 "eslint-plugin-jest@npm:^29.0.1":
   version: 29.15.0
   resolution: "eslint-plugin-jest@npm:29.15.0"
@@ -11202,9 +11215,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-enriched-markdown-example@workspace:example":
+"react-native-enriched-markdown-example@workspace:examples/mobile":
   version: 0.0.0-use.local
-  resolution: "react-native-enriched-markdown-example@workspace:example"
+  resolution: "react-native-enriched-markdown-example@workspace:examples/mobile"
   dependencies:
     "@babel/core": "npm:^7.25.2"
     "@babel/preset-env": "npm:^7.25.3"
@@ -11225,9 +11238,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"react-native-enriched-markdown-macos-example@workspace:macos-example":
+"react-native-enriched-markdown-macos-example@workspace:examples/macos":
   version: 0.0.0-use.local
-  resolution: "react-native-enriched-markdown-macos-example@workspace:macos-example"
+  resolution: "react-native-enriched-markdown-macos-example@workspace:examples/macos"
   dependencies:
     "@babel/core": "npm:^7.25.2"
     "@react-native-community/cli": "npm:20.0.0"
@@ -11263,6 +11276,7 @@ __metadata:
     del-cli: "npm:^6.0.0"
     eslint: "npm:^9.35.0"
     eslint-config-prettier: "npm:^10.1.8"
+    eslint-plugin-ft-flow: "npm:^3.0.11"
     eslint-plugin-prettier: "npm:^5.5.4"
     jest: "npm:^29.7.0"
     lefthook: "npm:^2.0.3"

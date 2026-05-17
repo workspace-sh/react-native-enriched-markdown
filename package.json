@@ -41,8 +41,8 @@
     "harness:start": "cd examples/macos-harness && npx react-native start",
     "harness:macos": "cd examples/macos-harness && npx react-native run-macos",
     "harness:setup": "yarn harness:install && yarn harness:pods",
-    "android:build:release": "cd example && npx react-native build-android --mode=release",
-    "android:test:release": "cd example && yarn android --mode release",
+    "android:build:release": "cd examples/mobile && npx react-native build-android --mode=release",
+    "android:test:release": "cd examples/mobile && yarn android --mode release",
     "test": "jest",
     "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
@@ -52,9 +52,9 @@
     "lint-clang:android:fix": "find android/ \\( -iname \"*.h\" -o -iname \"*.cpp\" \\) | grep -v -e build | xargs npx clang-format -i",
     "lint-clang": "yarn lint-clang:ios && yarn lint-clang:android",
     "lint-clang:fix": "yarn lint-clang:ios:fix && yarn lint-clang:android:fix",
-    "lint-kotlin": "cd example/android && ./gradlew :react-native-enriched-markdown:ktlintCheck",
-    "lint-kotlin:fix": "cd example/android && ./gradlew :react-native-enriched-markdown:ktlintFormat",
-    "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build macos-example/macos/build lib",
+    "lint-kotlin": "cd examples/mobile/android && ./gradlew :react-native-enriched-markdown:ktlintCheck",
+    "lint-kotlin:fix": "cd examples/mobile/android && ./gradlew :react-native-enriched-markdown:ktlintFormat",
+    "clean": "del-cli android/build examples/mobile/android/build examples/mobile/android/app/build examples/mobile/ios/build examples/macos/macos/build lib",
     "prepare": "bob build",
     "release": "release-it --only-version"
   },
@@ -117,15 +117,15 @@
     }
   },
   "workspaces": [
-    "example",
-    "macos-example"
+    "examples/mobile",
+    "examples/macos"
   ],
   "packageManager": "yarn@4.11.0",
   "jest": {
     "preset": "react-native",
     "modulePathIgnorePatterns": [
-      "<rootDir>/example/node_modules",
-      "<rootDir>/macos-example/node_modules",
+      "<rootDir>/examples/mobile/node_modules",
+      "<rootDir>/examples/macos/node_modules",
       "<rootDir>/lib/"
     ]
   },
