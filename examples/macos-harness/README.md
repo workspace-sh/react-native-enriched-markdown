@@ -12,28 +12,28 @@ Lives at `examples/macos-harness/` inside the library repo — Metro and CocoaPo
 
 ## Setup
 
+From the library root:
+
 ```sh
-npm install --ignore-scripts
-cd macos && LANG=en_US.UTF-8 pod install && cd ..
+yarn install
+yarn harness:pods
 ```
 
 If the library needs codegen:
 
 ```sh
-cd ../..
-npm install
-npx bob build
-cd examples/macos-harness/macos && LANG=en_US.UTF-8 pod install && cd ..
+yarn prepare        # bob build
+yarn harness:pods   # re-run pod install after codegen
 ```
 
 ## running
 
 ```sh
-# terminal 1
-npx react-native start
+# terminal 1 — from the library root
+yarn harness:start
 
-# terminal 2
-npx react-native run-macos
+# terminal 2 — from the library root
+yarn harness:macos
 ```
 
 If port 8081 is busy:

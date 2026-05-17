@@ -36,11 +36,10 @@
   "scripts": {
     "example": "yarn workspace react-native-enriched-markdown-example",
     "macos-example": "yarn workspace react-native-enriched-markdown-macos-example",
-    "harness:install": "cd examples/macos-harness && npm install --ignore-scripts",
+    "harness": "yarn workspace react-native-enriched-markdown-macos-harness",
     "harness:pods": "cd examples/macos-harness/macos && LANG=en_US.UTF-8 pod install",
-    "harness:start": "cd examples/macos-harness && npx react-native start",
-    "harness:macos": "cd examples/macos-harness && npx react-native run-macos",
-    "harness:setup": "yarn harness:install && yarn harness:pods",
+    "harness:start": "yarn harness start",
+    "harness:macos": "yarn harness macos",
     "android:build:release": "cd examples/mobile && npx react-native build-android --mode=release",
     "android:test:release": "cd examples/mobile && yarn android --mode release",
     "test": "jest",
@@ -118,7 +117,8 @@
   },
   "workspaces": [
     "examples/mobile",
-    "examples/macos"
+    "examples/macos",
+    "examples/macos-harness"
   ],
   "packageManager": "yarn@4.11.0",
   "jest": {
