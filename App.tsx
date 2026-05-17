@@ -15,12 +15,14 @@ import testMarkdown from './testdata/Test Markdown File.md';
 import gfmHarness from './testdata/gfm-harness.md';
 import gfmReference from './testdata/gfm-reference.md';
 import gruberSyntax from './testdata/Markdown Syntax - John Gruber.markdown';
+import imageTest from './testdata/image-test.md';
 
 const TEST_FILES = [
   { label: 'GFM Reference', content: gfmReference },
   { label: 'GFM Harness', content: gfmHarness },
   { label: 'Syntax Test', content: testMarkdown },
   { label: 'Gruber Syntax', content: gruberSyntax },
+  { label: 'Image Test', content: imageTest },
 ];
 
 const lightMarkdownStyle = {
@@ -84,7 +86,7 @@ function App() {
     if (url.startsWith('#')) {
       // Anchor scrolling handled natively by the library
     } else if (url.startsWith('http://') || url.startsWith('https://')) {
-      Linking.openURL(url).catch((err) =>
+      Linking.openURL(url).catch(err =>
         Alert.alert('Failed to open link', err.message),
       );
     } else {
@@ -130,7 +132,10 @@ function App() {
             onLinkPress={handleLinkPress}
             style={[
               styles.markdownTab,
-              { zIndex: activeIndex === i ? 1 : 0, opacity: activeIndex === i ? 1 : 0 },
+              {
+                zIndex: activeIndex === i ? 1 : 0,
+                opacity: activeIndex === i ? 1 : 0,
+              },
             ]}
             pointerEvents={activeIndex === i ? 'auto' : 'none'}
           />

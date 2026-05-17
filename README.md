@@ -37,8 +37,8 @@ npx react-native run-macos
 If port 8081 is busy:
 
 ```sh
-npx react-native start --port 8082
-RCT_METRO_PORT=8082 npx react-native run-macos
+npx react-native start --port 8083
+RCT_METRO_PORT=8083 npx react-native run-macos
 ```
 
 Alternatively, open `macos/workspace.xcworkspace` in Xcode and run the `workspace-macOS` scheme directly.
