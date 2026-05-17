@@ -37,6 +37,8 @@
 #import <ReactNativeEnrichedMarkdown/Props.h>
 #import <ReactNativeEnrichedMarkdown/RCTComponentViewHelpers.h>
 
+#include "MeasurementCache.h"
+
 #import "RCTFabricComponentsPlugins.h"
 #import <React/RCTConversions.h>
 #import <React/RCTFont.h>
@@ -196,6 +198,11 @@ using namespace facebook::react;
     [self addSubview:_macScrollContainer];
 #endif
 
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(handleImageAttachmentDidLoad:)
+                                                 name:@"ENRMImageAttachmentDidLoad"
+                                               object:nil];
+
     _fontScaleObserver = [[FontScaleObserver alloc] init];
     __weak EnrichedMarkdown *weakSelf = self;
     _fontScaleObserver.onChange = ^{
@@ -273,6 +280,7 @@ using namespace facebook::react;
       CGRect segmentFrame = CGRectMake(insetLeft, yOffset, contentWidth, segmentHeight);
       segment.frame = segmentFrame;
 #if TARGET_OS_OSX
+      NSLog(@"[ENRM-SEG] seg %lu: y=%.0f h=%.0f w=%.0f", (unsigned long)i, yOffset, segmentHeight, contentWidth);
       if ([segment isKindOfClass:[EnrichedMarkdownInternalText class]]) {
         EnrichedMarkdownInternalText *textSeg = (EnrichedMarkdownInternalText *)segment;
         textSeg.textView.frame = segment.bounds;
@@ -329,6 +337,14 @@ using namespace facebook::react;
 {
   if (_state == nullptr) {
     return;
+  }
+
+  // Always invalidate the measurement cache before pushing a state update.
+  // Without this, Yoga's measureContent returns the stale cached height
+  // (e.g. from before async images loaded) and never resizes the component.
+  const auto &props = *std::static_pointer_cast<EnrichedMarkdownProps const>(_props);
+  if (!props.markdown.empty()) {
+    MeasurementCache::shared().invalidateForMarkdown(props.markdown);
   }
 
   _heightUpdateCounter++;
@@ -668,20 +684,64 @@ using namespace facebook::react;
 }
 #endif
 
+- (void)handleImageAttachmentDidLoad:(NSNotification *)notification
+{
+  // The notification may fire on a background thread (e.g. when an image is
+  // served from the in-memory cache during the background render pass).
+  // All UIKit/AppKit work must happen on the main thread.
+  if (![NSThread isMainThread]) {
+    dispatch_async(dispatch_get_main_queue(), ^{ [self handleImageAttachmentDidLoad:notification]; });
+    return;
+  }
+
+  // Re-render the entire markdown from scratch. This creates fresh text views
+  // whose layout managers have never seen the placeholder attachment bounds.
+  // When NSTextKit does layout for the first time on these fresh views, it
+  // queries attachmentBoundsForTextContainer: and gets the real natural
+  // dimensions — no stale glyph position caching to fight.
+  //
+  // Previous approaches (replacing text storage content, invalidating layout
+  // ranges) failed because NSTextKit on macOS aggressively caches line fragment
+  // rects from the initial layout pass and doesn't reliably re-query attachment
+  // bounds even after setAttributedString: replacement.
+  //
+  // The attachment registry ensures the same (already-loaded) attachment objects
+  // are reused, so no new downloads are triggered. The _currentRenderId mechanism
+  // in renderMarkdownContent: handles coalescing if multiple images load in
+  // quick succession.
+  if (_cachedMarkdown && _cachedMarkdown.length > 0) {
+    const auto &props = *std::static_pointer_cast<EnrichedMarkdownProps const>(_props);
+    if (!props.markdown.empty()) {
+      MeasurementCache::shared().invalidateForMarkdown(props.markdown);
+    }
+    [self renderMarkdownContent:_cachedMarkdown];
+  }
+}
+
+- (void)dealloc
+{
+  [[NSNotificationCenter defaultCenter] removeObserver:self name:@"ENRMImageAttachmentDidLoad" object:nil];
+}
+
 - (void)layoutSubviews
 {
   [super layoutSubviews];
 #if TARGET_OS_OSX
-  // Ensure scroll container is on top (Fabric's _containerView may cover it)
-  [_macScrollContainer removeFromSuperview];
-  [self addSubview:_macScrollContainer];
+  // Ensure scroll container is on top of Fabric's _containerView.
+  // Use addSubview:positioned:relativeTo: to reorder in place — when the view
+  // is already a subview this just adjusts z-order without removing it from
+  // the window hierarchy, which previously caused NSTextView to lose layout
+  // state computed by ensureLayoutForTextContainer:.
+  if ([[self subviews] lastObject] != _macScrollContainer) {
+    [self addSubview:_macScrollContainer positioned:NSWindowAbove relativeTo:nil];
+  }
   _macScrollContainer.frame = self.bounds;
-  CGFloat width = _macScrollContainer.contentSize.width;
-  if (width <= 0)
-    width = self.bounds.size.width;
+  CGFloat width = self.bounds.size.width;
   // computeSegmentLayoutForWidth applies contentInset padding to segments directly
   CGFloat totalHeight = [self computeSegmentLayoutForWidth:width applyFrames:YES];
-  _macDocumentView.frame = NSMakeRect(0, 0, width, MAX(totalHeight, self.bounds.size.height));
+  NSSize docSize = NSMakeSize(width, MAX(totalHeight, self.bounds.size.height));
+  [_macDocumentView setFrameSize:docSize];
+  [_macScrollContainer reflectScrolledClipView:_macScrollContainer.contentView];
 #else
   [self computeSegmentLayoutForWidth:self.bounds.size.width applyFrames:YES];
 #endif

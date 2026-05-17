@@ -119,12 +119,24 @@ static inline void ENRMConfigureMarkdownTextView(ENRMPlatformTextView *textView)
   textView.editable = NO;
   textView.scrollEnabled = NO;
 #if !TARGET_OS_OSX
+  textView.scrollsToTop = NO;
   textView.showsVerticalScrollIndicator = NO;
   textView.showsHorizontalScrollIndicator = NO;
   textView.textContainerInset = UIEdgeInsetsZero;
 #else
   textView.textContainerInsets = UIEdgeInsetsZero;
   textView.drawsBackground = NO;
+  // Prevent the text container height from being overridden by frame changes.
+  // We manage the container size explicitly (CGFLOAT_MAX during measurement);
+  // without this, heightTracksTextView=YES can shrink the container to the
+  // text view's frame height before layout is complete, causing NSTextKit to
+  // clip content below image attachments.
+  textView.textContainer.heightTracksTextView = NO;
+  textView.textContainer.widthTracksTextView = NO;
+  // Prevent NSTextView from auto-resizing in response to processEditing
+  // (which would fight our explicit frame management).
+  textView.verticallyResizable = NO;
+  textView.horizontallyResizable = NO;
 #endif
   textView.textContainer.lineFragmentPadding = 0;
 #if TARGET_OS_OSX
@@ -147,21 +159,15 @@ typedef struct {
 } ENRMTextLayoutResult;
 
 /// Measures text layout in a text view for a given width.
-/// On macOS, temporarily disables widthTracksTextView so the container width
-/// can be set directly without being overridden by the view's frame.
+/// Container size is set explicitly; on macOS both width/height tracking are
+/// permanently disabled in ENRMConfigureMarkdownTextView so no toggle is needed.
 static inline ENRMTextLayoutResult ENRMMeasureTextLayout(ENRMPlatformTextView *textView, CGFloat maxWidth)
 {
-#if TARGET_OS_OSX
-  textView.textContainer.widthTracksTextView = NO;
-#endif
   textView.textContainer.size = CGSizeMake(maxWidth, CGFLOAT_MAX);
   [textView.layoutManager ensureLayoutForTextContainer:textView.textContainer];
   ENRMTextLayoutResult result;
   result.usedRect = [textView.layoutManager usedRectForTextContainer:textView.textContainer];
   result.extraLineFragmentRect = textView.layoutManager.extraLineFragmentRect;
-#if TARGET_OS_OSX
-  textView.textContainer.widthTracksTextView = YES;
-#endif
   return result;
 }
 

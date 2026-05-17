@@ -28,6 +28,8 @@ static NSMapTable<NSString *, ENRMImageAttachment *> *_attachmentRegistry;
 @property (nonatomic, assign) CGFloat explicitWidth;
 @property (nonatomic, assign) CGFloat explicitHeight;
 @property (nonatomic, assign) BOOL responsive;
+@property (nonatomic, assign) CGFloat naturalWidth;
+@property (nonatomic, assign) CGFloat naturalHeight;
 /// Clean URL with __enrm fragment stripped (used for downloading/caching)
 @property (nonatomic, copy) NSString *downloadURL;
 @property (nonatomic, weak) NSTextContainer *textContainer;
@@ -74,7 +76,7 @@ static NSMapTable<NSString *, ENRMImageAttachment *> *_attachmentRegistry;
   // Use full URL (with fragment) as registry key so different dimensions produce different attachments
   NSString *key = [NSString stringWithFormat:@"%@_%d", imageURL, isInline];
   ENRMImageAttachment *existing = [[self attachmentRegistry] objectForKey:key];
-  if (existing && existing.loadedImage) {
+  if (existing && existing.originalImage) {
     return existing;
   }
   ENRMImageAttachment *attachment = [[self alloc] initWithImageURL:imageURL config:config isInline:isInline];
@@ -159,6 +161,18 @@ static void parseEnrmFragment(NSString *url, NSString **outCleanURL, CGFloat *ou
     width = self.explicitWidth > 0 ? self.explicitWidth : height;
   } else if (self.explicitWidth > 0) {
     width = self.explicitWidth;
+  } else if (self.naturalWidth > 0) {
+    // Natural image dimensions known — use them, clamped to container
+    CGFloat containerWidth = lineFragment.size.width > 0 ? lineFragment.size.width : self.naturalWidth;
+    if (self.naturalWidth <= containerWidth) {
+      // Small image: render at natural size
+      width = self.naturalWidth;
+      height = self.naturalHeight;
+    } else {
+      // Large image: clamp to container, preserve aspect ratio
+      width = containerWidth;
+      height = round(containerWidth * (self.naturalHeight / self.naturalWidth));
+    }
   } else {
     width = lineFragment.size.width > 0 ? lineFragment.size.width : height;
   }
@@ -182,6 +196,11 @@ static void parseEnrmFragment(NSString *url, NSString **outCleanURL, CGFloat *ou
     return CGRectMake(0, verticalOffset, width, height);
   }
 
+  if (!self.isInline) {
+    NSLog(@"[ENRM-ATT] bounds called: natW=%.0f natH=%.0f lineW=%.0f -> w=%.0f h=%.0f (selfBounds=%.0fx%.0f)",
+          self.naturalWidth, self.naturalHeight, lineFragment.size.width, width, height, self.bounds.size.width,
+          self.bounds.size.height);
+  }
   return CGRectMake(0, 0, width, height);
 }
 
@@ -192,9 +211,73 @@ static void parseEnrmFragment(NSString *url, NSString **outCleanURL, CGFloat *ou
   self.textContainer = textContainer;
 
   if (self.originalImage && imageBounds.size.width > 0) {
-    self.bounds = imageBounds;
+    // Only set bounds for inline images. Block images must keep bounds at
+    // CGRectZero so NSLayoutManager calls attachmentBoundsForTextContainer:
+    // on every layout pass (see setupPlaceholder comment).
+    if (self.isInline) {
+      self.bounds = imageBounds;
+    }
+    self.cachedHeight = imageBounds.size.height;
     CGFloat targetWidth = self.explicitWidth > 0 ? self.explicitWidth : imageBounds.size.width;
-    [self processAndApplyImage:self.originalImage withTargetWidth:targetWidth];
+
+    // This method is called by NSTextKit during layout/draw. It MUST be
+    // side-effect-free — calling refreshDisplay (which mutates textStorage)
+    // from here causes re-entrant layout that corrupts glyph positions,
+    // making subsequent text overlap the image.
+    //
+    // Instead, we check the processed cache directly and kick off async
+    // processing if needed, without ever touching textStorage.
+    NSString *processedKey =
+        CACHE_KEY_PROCESSED(self.imageURL, targetWidth, self.cachedHeight, self.cachedBorderRadius);
+
+    if (![processedKey isEqualToString:self.lastProcessedKey]) {
+      RCTUIImage *cachedProcessed = [[ENRMImageAttachment processedImageCache] objectForKey:processedKey];
+
+      if (cachedProcessed) {
+        // Cache hit — apply image but do NOT call refreshDisplay.
+        self.lastProcessedKey = processedKey;
+        self.loadedImage = cachedProcessed;
+        if (self.isInline)
+          self.image = cachedProcessed;
+      } else {
+        // Cache miss — process on a background queue. The completion will
+        // set loadedImage and call refreshDisplay on the next run loop,
+        // safely outside the layout/draw pass.
+        self.lastProcessedKey = processedKey;
+        __weak typeof(self) weakSelf = self;
+        RCTUIImage *original = self.originalImage;
+        CGFloat height = self.cachedHeight;
+        CGFloat radius = self.cachedBorderRadius;
+        BOOL isInline = self.isInline;
+
+        dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+          __strong typeof(weakSelf) strongSelf = weakSelf;
+          if (!strongSelf)
+            return;
+
+          RCTUIImage *processedImage = [strongSelf createScaledImage:original
+                                                             toWidth:targetWidth
+                                                              height:height
+                                                        borderRadius:radius];
+          if (processedImage) {
+            [[ENRMImageAttachment processedImageCache] setObject:processedImage
+                                                          forKey:processedKey
+                                                            cost:ENRMImageByteCost(processedImage)];
+          }
+
+          dispatch_async(dispatch_get_main_queue(), ^{
+            strongSelf.loadedImage = processedImage;
+            if (isInline) {
+              strongSelf.image = processedImage;
+              strongSelf.bounds = CGRectMake(0, 0, height, height);
+            } else {
+              strongSelf.image = original;
+            }
+            [strongSelf refreshDisplay];
+          });
+        });
+      }
+    }
   }
 
   return self.loadedImage ?: self.image;
@@ -207,50 +290,38 @@ static void parseEnrmFragment(NSString *url, NSString **outCleanURL, CGFloat *ou
 
   self.originalImage = image;
 
-  if (image.size.width > 0) {
-    CGFloat aspectRatio = image.size.height / image.size.width;
+  if (image.size.width > 0 && image.size.height > 0) {
+    self.naturalWidth = image.size.width;
+    self.naturalHeight = image.size.height;
 
     if (self.explicitWidth > 0 && self.explicitHeight == 0) {
       // Explicit width without height — derive from aspect ratio
+      CGFloat aspectRatio = image.size.height / image.size.width;
       self.cachedHeight = round(self.explicitWidth * aspectRatio);
-    } else if (self.explicitWidth == 0 && self.explicitHeight == 0) {
-      // No explicit dimensions
-      if (self.isInline) {
-        if (self.responsive) {
-          // responsive flag: use image's natural dimensions for inline images too
-          self.cachedHeight = image.size.height;
-          self.explicitWidth = image.size.width;
-        }
-        // else: keep at configured inlineImageSize (matches GitHub behaviour)
-      } else {
-        // Block: container width will be used; derive height from aspect ratio
-        CGFloat containerWidth = self.textContainer.size.width > 0 ? self.textContainer.size.width : image.size.width;
-        // If image is narrower than container, use natural size instead of stretching
-        if (image.size.width < containerWidth) {
-          self.explicitWidth = image.size.width;
-          self.cachedHeight = image.size.height;
-        } else {
-          self.cachedHeight = round(containerWidth * aspectRatio);
-        }
-      }
     }
   }
 
-  CGFloat targetWidth;
   if (self.explicitWidth > 0) {
-    targetWidth = self.explicitWidth;
+    // Explicit dimensions: process immediately
+    [self processAndApplyImage:image withTargetWidth:self.explicitWidth];
   } else if (self.isInline) {
-    targetWidth = self.cachedHeight;
+    // Inline without explicit dims: process at configured size
+    [self processAndApplyImage:image withTargetWidth:self.cachedHeight];
   } else {
-    targetWidth = self.bounds.size.width;
+    // Block without explicit dims: defer to imageForBounds where container width is known.
+    // refreshDisplay and the notification must run on the main thread because they
+    // access layout managers and trigger UIKit/AppKit relayout. When images are served
+    // from the in-memory cache, handleLoadedImage: runs on the background render queue.
+    void (^notifyBlock)(void) = ^{
+      [self refreshDisplay];
+      [[NSNotificationCenter defaultCenter] postNotificationName:@"ENRMImageAttachmentDidLoad" object:nil];
+    };
+    if ([NSThread isMainThread]) {
+      notifyBlock();
+    } else {
+      dispatch_async(dispatch_get_main_queue(), notifyBlock);
+    }
   }
-
-  // Defer processing if we don't have valid bounds yet (common for non-inline block images)
-  if (!self.isInline && targetWidth <= 0) {
-    return;
-  }
-
-  [self processAndApplyImage:image withTargetWidth:targetWidth];
 }
 
 - (void)processAndApplyImage:(RCTUIImage *)image withTargetWidth:(CGFloat)targetWidth
@@ -352,14 +423,22 @@ static void parseEnrmFragment(NSString *url, NSString **outCleanURL, CGFloat *ou
 
 - (void)refreshDisplay
 {
-  UITextView *textView = [self fetchAssociatedTextView];
+  ENRMPlatformTextView *textView = [self fetchAssociatedTextView];
   if (!textView)
     return;
 
-  NSRange range = [self findAttachmentRangeInText:textView.textStorage];
-  if (range.location != NSNotFound) {
-    [textView.layoutManager invalidateDisplayForCharacterRange:range];
-    [textView.layoutManager invalidateLayoutForCharacterRange:range actualCharacterRange:NULL];
+  // Replace the text storage content with a fresh copy. This is the most
+  // aggressive invalidation possible — it forces NSTextKit to discard all
+  // cached glyphs, line fragment rects, and attachment bounds, then rebuild
+  // everything from scratch. Lighter approaches (edited:NSTextStorageEditedAttributes,
+  // invalidateLayoutForCharacterRange:) were not sufficient on macOS because
+  // NSTextKit can optimize away no-op attribute edits and skip re-querying
+  // attachmentBoundsForTextContainer: for subsequent lines.
+  NSTextStorage *storage = textView.textStorage;
+  NSUInteger len = storage.length;
+  if (len > 0) {
+    NSAttributedString *fresh = [[NSAttributedString alloc] initWithAttributedString:storage];
+    [storage setAttributedString:fresh];
   }
 }
 
@@ -375,8 +454,18 @@ static void parseEnrmFragment(NSString *url, NSString **outCleanURL, CGFloat *ou
 
 - (void)setupPlaceholder
 {
-  CGFloat size = self.cachedHeight;
-  self.bounds = CGRectMake(0, 0, size, size);
+  // For inline images, set bounds directly so NSTextKit can size them without
+  // calling attachmentBoundsForTextContainer: (inline layout is simpler).
+  // For block images, leave bounds at CGRectZero. This forces NSLayoutManager
+  // to call our attachmentBoundsForTextContainer: override on EVERY layout pass,
+  // where we return the correct size based on naturalWidth/naturalHeight.
+  // Setting bounds to non-zero here would cause NSLayoutManager to use the
+  // stale placeholder size directly, bypassing our override and producing
+  // overlapping content when async-loaded images are taller than the placeholder.
+  if (self.isInline) {
+    CGFloat size = self.cachedHeight;
+    self.bounds = CGRectMake(0, 0, size, size);
+  }
   RCTUIGraphicsImageRenderer *renderer = [[RCTUIGraphicsImageRenderer alloc] initWithSize:CGSizeMake(1, 1)];
   self.image = [renderer imageWithActions:^(RCTUIGraphicsImageRendererContext *ctx){}];
 }

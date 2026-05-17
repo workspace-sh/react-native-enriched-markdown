@@ -198,6 +198,21 @@ public:
     }
   }
 
+  /// Removes all cache entries whose markdown content matches the given string.
+  /// Called when async image loads change the measured height for existing content.
+  void invalidateForMarkdown(const std::string &markdown)
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (auto it = map_.begin(); it != map_.end();) {
+      if (it->first.markdown == markdown) {
+        list_.erase(it->second);
+        it = map_.erase(it);
+      } else {
+        ++it;
+      }
+    }
+  }
+
 private:
   MeasurementCache() = default;
 

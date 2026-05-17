@@ -32,6 +32,8 @@
 #import <ReactNativeEnrichedMarkdown/Props.h>
 #import <ReactNativeEnrichedMarkdown/RCTComponentViewHelpers.h>
 
+#include "MeasurementCache.h"
+
 #import "RCTFabricComponentsPlugins.h"
 #import <React/RCTConversions.h>
 #import <React/RCTFont.h>
@@ -151,6 +153,22 @@ using namespace facebook::react;
   _state->updateState(EnrichedMarkdownTextState(_heightUpdateCounter, selfRef));
 }
 
+- (void)handleImageAttachmentDidLoad:(NSNotification *)notification
+{
+  if (![NSThread isMainThread]) {
+    dispatch_async(dispatch_get_main_queue(), ^{ [self handleImageAttachmentDidLoad:notification]; });
+    return;
+  }
+
+  if (_cachedMarkdown && _cachedMarkdown.length > 0) {
+    const auto &props = *std::static_pointer_cast<EnrichedMarkdownTextProps const>(_props);
+    if (!props.markdown.empty()) {
+      MeasurementCache::shared().invalidateForMarkdown(props.markdown);
+    }
+    [self renderMarkdownContent:_cachedMarkdown];
+  }
+}
+
 - (instancetype)initWithFrame:(CGRect)frame
 {
   if (self = [super initWithFrame:frame]) {
@@ -183,6 +201,11 @@ using namespace facebook::react;
     };
 
     [self setupTextView];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(handleImageAttachmentDidLoad:)
+                                                 name:@"ENRMImageAttachmentDidLoad"
+                                               object:nil];
   }
 
   return self;
